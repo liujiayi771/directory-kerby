@@ -78,7 +78,9 @@ public class RemoteAdminClientTool {
         + "list_principals, listprincs\n"
         + "                         List principals\n"
         + "ktadd, xst\n"
-        + "                         Add entry(s) to a keytab\n";
+        + "                         Add entry(s) to a keytab\n"
+        + "change_password, cpw\n"
+        + "                         Change password\n";
 
     public static void main(String[] args) throws Exception {
         AdminClient adminClient;
@@ -206,7 +208,7 @@ public class RemoteAdminClientTool {
         System.out.println("enter \"command\" to see legal commands.");
 
         Completer completer = new StringsCompleter("add_principal", "delete_principal", "rename_principal",
-                "list_principals", "ktadd");
+                "list_principals", "ktadd", "change_password");
 
         Terminal terminal = null;
         try {
@@ -274,6 +276,9 @@ public class RemoteAdminClientTool {
         } else if (input.startsWith("ktadd")
             || input.startsWith("xst")) {
             executor = new RemoteKeytabAddCommand(adminClient);
+        } else if (input.startsWith("change_password")
+                || input.startsWith("cpw")) {
+            executor = new RemoteChangePasswordCommand(adminClient);
         } else {
             System.out.println(LEGAL_COMMANDS);
             return;

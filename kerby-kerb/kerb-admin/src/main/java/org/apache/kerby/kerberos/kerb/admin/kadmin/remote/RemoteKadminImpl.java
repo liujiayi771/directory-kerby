@@ -208,7 +208,10 @@ public class RemoteKadminImpl implements Kadmin {
     @Override
     public void changePassword(String principal,
                                String newPassword) throws KrbException {
-
+        AdminRequest changePwdRequest = new ChangePasswordRequest(principal, newPassword);
+        changePwdRequest.setTransport(transport);
+        AdminHandler adminHandler = new DefaultAdminHandler();
+        adminHandler.handleRequest(changePwdRequest);
     }
 
     @Override

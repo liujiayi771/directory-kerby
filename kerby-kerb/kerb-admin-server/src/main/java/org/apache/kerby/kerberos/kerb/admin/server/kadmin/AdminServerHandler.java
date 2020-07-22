@@ -94,6 +94,10 @@ public class AdminServerHandler {
                 System.out.println("message type: export keytab req");
                 responseMessage = handleExportKeytabReq(localKadmin, fieldInfos);
                 break;
+            case CHANGE_PWD_REQ:
+                System.out.println("message type changePwd req");
+                responseMessage = handleChangePwdReq(localKadmin, fieldInfos);
+                break;
             default:
                 throw new KrbException("AdminMessageType error, can not handle the type: " + type);
         }
@@ -236,6 +240,31 @@ public class AdminServerHandler {
         return responseError;
     }
 
+    private ByteBuffer handleChangePwdReq(LocalKadmin localKadmin, XdrFieldInfo[] fieldInfos) throws IOException {
+        String principal = ((String) fieldInfos[2].getValue());
+        String newPassword = ((String) fieldInfos[3].getValue());
+
+        if (principal == null || principal.isEmpty() || newPassword == null || newPassword.isEmpty()) {
+            String error = "Value of principal or new password is null.";
+            ByteBuffer responseError = infoPackageTool(error, "changePwd");
+            return responseError;
+        }
+
+        try {
+            localKadmin.changePassword(principal, newPassword);
+        } catch (KrbException e) {
+            String error = String.format("Failed to change password of principal %s. ", principal) + e.toString();
+            ByteBuffer responseError = infoPackageTool(error, "changePwd");
+            return responseError;
+        }
+
+        String message = String.format("Change password of principal %s.", principal);
+        System.out.println(message);
+        LOG.info(message);
+        ByteBuffer responseMessage = infoPackageTool(message, "changePwd");
+        return responseMessage;
+    }
+
     private ByteBuffer infoPackageTool(String message, String dealType) throws IOException {
         AdminMessage adminMessage = null;
         XdrFieldInfo[] xdrFieldInfos = new XdrFieldInfo[3];
@@ -252,6 +281,9 @@ public class AdminServerHandler {
         } else if ("addPrincipal".equals(dealType)) {
             adminMessage = new AddPrincipalRep();
             xdrFieldInfos[0] = new XdrFieldInfo(0, XdrDataType.ENUM, AdminMessageType.ADD_PRINCIPAL_REP);
+        } else if ("changePwd".equals(dealType)) {
+            adminMessage = new ChangePasswordRep();
+            xdrFieldInfos[0] = new XdrFieldInfo(0, XdrDataType.ENUM, AdminMessageType.CHANGE_PWD_REP);
         }
 
         xdrFieldInfos[1] = new XdrFieldInfo(1, XdrDataType.INTEGER, 1);
